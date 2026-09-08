@@ -1,7 +1,7 @@
 .DS_Store
 node_modules/
-.idea/
+index.html
+!docs/index.html
+package-lock.json
+.idea
 *.iml
-__pycache__/
-.venv/
-site/
