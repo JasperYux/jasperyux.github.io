@@ -37,8 +37,10 @@ def plain(value):
     return ' '.join(bleach.clean(markdown.markdown(value), tags=[], strip=True).split())
 
 
-def shell(title, content, path='/', description='记录、叙述、回忆。这里是 JasperYux 的个人博客。'):
+def shell(title, content, path='/', description='记录、叙述、回忆。这里是 JasperYux 的个人博客。', home=False):
     esc = html.escape
+    header = '' if home else f'<header class="topbar"><a class="brand" href="/">JasperYux</a><nav aria-label="主导航"><a href="/">文章</a><a href="/archive/">归档</a><a href="https://github.com/{OWNER}/{REPO}">GitHub ↗</a></nav></header>'
+    footer = '' if home else f'<footer>© {datetime.now(ZoneInfo("Asia/Shanghai")).year} JasperYux <a href="/feed.xml">RSS</a></footer>'
     return f'''<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(title)}</title><meta name="description" content="{esc(description, quote=True)}">
@@ -46,9 +48,8 @@ def shell(title, content, path='/', description='记录、叙述、回忆。这�
 <meta property="og:title" content="{esc(title, quote=True)}"><meta property="og:description" content="{esc(description, quote=True)}"><meta property="og:url" content="{BASE}{path}">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/site.css">
 <link rel="alternate" type="application/atom+xml" title="JasperYux's Blog" href="/feed.xml">
-<script defer src="/assets/site.js"></script></head><body><a class="skip" href="#main">跳到正文</a><div class="shell">
-<header class="topbar"><a class="brand" href="/">JasperYux<span>.</span></a><nav aria-label="主导航"><a href="/">文章</a><a href="/#archive">归档</a><a href="https://github.com/{OWNER}/{REPO}">GitHub ↗</a></nav></header>
-{content}<footer><span>© {datetime.now(ZoneInfo('Asia/Shanghai')).year} JasperYux · 记录、叙述、回忆</span><a href="/feed.xml">RSS 订阅 ↗</a></footer></div></body></html>'''
+<script defer src="/assets/site.js"></script></head><body class="{'home-page' if home else 'reading-page'}"><a class="skip" href="#main">跳到正文</a><div class="shell">
+{header}{content}{footer}</div></body></html>'''
 
 
 def write(path, text):
@@ -101,27 +102,12 @@ def main():
         article_content = f'''<main id="main"><div class="article-head"><a class="back" href="/">← 返回全部文章</a><h1>{html.escape(title)}</h1>{meta}</div>
 <div class="article-layout"><article class="prose">{article}<div class="article-end"><a href="{html.escape(post['html_url'])}">在 GitHub 阅读 / 留言 ↗</a><a href="#main">回到顶部 ↑</a></div></article>{toc}</div></main>'''
         write(f'posts/{number}/index.html', shell(title + " · JasperYux's Blog", article_content, url, plain(body)[:140]))
-        # Show the latest week's actual content on annual journal cards.
-        excerpt_body = body
-        if is_weekly:
-            sections = re.split(r'(?m)^##\s+', body)
-            candidates = []
-            for section in sections:
-                found = re.match(r'(20\d{2})年第(\d+)周', section)
-                if found:
-                    candidates.append((int(found[1]), int(found[2]), section))
-            if candidates:
-                excerpt_body = max(candidates)[2]
-        excerpt = plain(excerpt_body)
-        excerpt = excerpt[:150] + ('…' if len(excerpt) > 150 else '')
-        search = html.escape((title + ' ' + plain(body)).lower(), quote=True)
-        cards.append(f'''<article class="post-card" data-year="{year}" data-search="{search}">{meta}<h2><a href="{url}">{html.escape(title)}</a></h2><p>{html.escape(excerpt)}</p><a class="read-link" href="{url}">{"阅读周报" if is_weekly else "阅读全文"}<span aria-hidden="true">↗</span></a></article>''')
+        cards.append(f'<article class="post-card">{meta}<h2><a href="{url}">{html.escape(title)}</a></h2></article>')
         rendered.append((post, article, url))
-    archives = ''.join(f'<a class="archive-link" href="/posts/{items[0]["number"]}/" data-filter-year="{year}">{year}<span>{len(items)} 篇 ↗</span></a>' for year, items in sorted(years.items(), reverse=True))
-    content = f'''<main id="main"><section class="hero"><div class="eyebrow">A PERSONAL JOURNAL</div><h1>记录、叙述、回忆。</h1><p>关于生活的片段，也关于一路走来的自己。</p></section>
-<div class="home-layout"><section id="articles" aria-label="文章列表"><h2 class="section-heading">最近更新<span id="result-count" aria-live="polite">{len(posts)} 篇记录</span></h2>{''.join(cards)}<p class="empty" id="empty" hidden>没有找到相关记录，试试其他关键词。</p></section>
-<aside class="sidebar"><section><label class="search-label" for="search">找一段回忆</label><input id="search" type="search" placeholder="搜索文章或正文" autocomplete="off"><button class="clear-filter" id="clear-filter" hidden>清除筛选</button><noscript><p>搜索需要启用 JavaScript，文章可直接阅读。</p></noscript></section><section id="archive"><h2>年度周报</h2>{archives}</section><section class="about"><h2>关于这里</h2><p>把日常写下来，<br>给未来的自己留一些回忆。</p><a class="read-link" href="https://github.com/{OWNER}">认识 JasperYux ↗</a></section></aside></div></main>'''
-    write('index.html', shell("JasperYux's Blog · 记录、叙述、回忆", content))
+    archives = ''.join(f'<a class="archive-link" href="/posts/{items[0]["number"]}/">{year}<span>{len(items)} 篇 ↗</span></a>' for year, items in sorted(years.items(), reverse=True))
+    content = f'''<div class="home-layout"><aside class="profile" aria-label="个人信息"><a href="https://github.com/{OWNER}"><img class="avatar" src="/assets/avatar.png" width="64" height="64" alt="JasperYux 的头像"></a><a class="profile-name" href="/">JasperYux</a><p class="bio">后端工程师 | 记录生活</p><a class="email" href="mailto:yxzzzzzz8@163.com">yxzzzzzz8@163.com</a><nav class="profile-nav" aria-label="主导航"><a href="/" aria-current="page">全部文章</a><a href="https://github.com/{OWNER}/{REPO}">GitHub ↗</a><a href="/feed.xml">RSS</a></nav><p class="profile-footer">© {datetime.now(ZoneInfo('Asia/Shanghai')).year} JasperYux</p></aside><main id="main"><h1 class="section-heading">最近更新</h1>{''.join(cards)}</main></div>'''
+    write('index.html', shell("JasperYux's Blog · 记录、叙述、回忆", content, home=True))
+    write('archive/index.html', shell('年度归档 · JasperYux', f'<main id="main" class="archive-page"><h1>年度周报</h1>{archives}</main>', '/archive/'))
     write('404.html', shell('页面未找到', '<main id="main" class="hero"><div class="eyebrow">404</div><h1>这页走远了。</h1><p>回到首页，找一段新的回忆。</p><p><a href="/">← 返回首页</a></p></main>', '/404.html'))
     ns = 'http://www.w3.org/2005/Atom'
     ET.register_namespace('', ns)
@@ -146,7 +132,7 @@ def main():
         sub(entry, 'content', article, type='html')
     write('feed.xml', ET.tostring(feed, encoding='unicode', xml_declaration=True))
     sitemap = ET.Element('urlset', xmlns='http://www.sitemaps.org/schemas/sitemap/0.9')
-    for url in ['/'] + [url for _, _, url in rendered]:
+    for url in ['/', '/archive/'] + [url for _, _, url in rendered]:
         ET.SubElement(ET.SubElement(sitemap, 'url'), 'loc').text = BASE + url
     write('sitemap.xml', ET.tostring(sitemap, encoding='unicode', xml_declaration=True))
     write('robots.txt', f'User-agent: *\nAllow: /\nSitemap: {BASE}/sitemap.xml\n')
