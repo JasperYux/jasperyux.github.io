@@ -120,12 +120,7 @@ summary:focus-visible {
 }
 .post-card .post-meta {
   font-size: 11px;
-  color: #767680;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-}
-.post-card .tag::before {
-  content: "· ";
+  color: #a0a0a8;
 }
 .post-card h2 {
   font-size: 21px;
@@ -428,5 +423,83 @@ footer {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+}
+
+/* Match the approved B prototype; these home rules do not affect article pages. */
+.home-page {
+  padding-bottom: 0;
+}
+.home-page .shell {
+  padding-bottom: 140px;
+}
+.bio {
+  color: #92929a;
+  margin-bottom: 27px;
+}
+.email {
+  margin-top: -12px;
+}
+.profile-footer {
+  color: #a5a5ab;
+}
+@media (min-width: 651px) and (max-width: 780px) {
+  .home-page .shell {
+    padding: 94px 45px 140px;
+  }
+  .home-layout {
+    display: grid;
+  }
+  .profile {
+    position: sticky;
+    padding: 8px 0 0;
+    margin: 0;
+    border: 0;
+  }
+  .avatar {
+    float: none;
+    width: 64px;
+    height: 64px;
+    margin: 0 0 17px;
+  }
+  .profile-name {
+    font-size: 21px;
+  }
+  .bio {
+    font-size: 12px;
+    margin: 7px 0 27px;
+  }
+  .email {
+    margin: -12px 0 26px;
+  }
+  .profile-nav {
+    flex-direction: column;
+    gap: 11px;
+  }
+  .profile-footer {
+    display: block;
+  }
+  .section-heading {
+    padding-bottom: 22px;
+  }
+  .post-card {
+    padding: 25px 0 28px;
+  }
+  .post-card h2 {
+    font-size: 21px;
+  }
+}
+@media (max-width: 650px) {
+  .home-page .shell {
+    padding: 35px 25px 110px;
+  }
+  .bio {
+    margin: 0 0 16px;
+  }
+  .email {
+    margin: 10px 0 18px;
+  }
+  .post-card {
+    padding: 25px 0 28px;
   }
 }

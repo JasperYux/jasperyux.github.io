@@ -1,5 +1,6 @@
 """Build public issue content into a credential-free, static blog."""
 import html
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -39,6 +40,8 @@ def plain(value):
 
 def shell(title, content, path='/', description='记录、叙述、回忆。这里是 JasperYux 的个人博客。', home=False):
     esc = html.escape
+    css_version = hashlib.sha256((ROOT / "assets/site.css").read_bytes()).hexdigest()[:12]
+    js_version = hashlib.sha256((ROOT / "assets/site.js").read_bytes()).hexdigest()[:12]
     header = '' if home else f'<header class="topbar"><a class="brand" href="/">JasperYux</a><nav aria-label="主导航"><a href="/">文章</a><a href="/archive/">归档</a><a href="https://github.com/{OWNER}/{REPO}">GitHub ↗</a></nav></header>'
     footer = '' if home else f'<footer>© {datetime.now(ZoneInfo("Asia/Shanghai")).year} JasperYux <a href="/feed.xml">RSS</a></footer>'
     return f'''<!doctype html>
@@ -46,9 +49,9 @@ def shell(title, content, path='/', description='记录、叙述、回忆。这�
 <title>{esc(title)}</title><meta name="description" content="{esc(description, quote=True)}">
 <link rel="canonical" href="{BASE}{path}"><meta property="og:type" content="{'website' if path == '/' else 'article'}">
 <meta property="og:title" content="{esc(title, quote=True)}"><meta property="og:description" content="{esc(description, quote=True)}"><meta property="og:url" content="{BASE}{path}">
-<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/site.css">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/site.css?v={css_version}">
 <link rel="alternate" type="application/atom+xml" title="JasperYux's Blog" href="/feed.xml">
-<script defer src="/assets/site.js"></script></head><body class="{'home-page' if home else 'reading-page'}"><a class="skip" href="#main">跳到正文</a><div class="shell">
+<script defer src="/assets/site.js?v={js_version}"></script></head><body class="{'home-page' if home else 'reading-page'}"><a class="skip" href="#main">跳到正文</a><div class="shell">
 {header}{content}{footer}</div></body></html>'''
 
 
@@ -102,7 +105,8 @@ def main():
         article_content = f'''<main id="main"><div class="article-head"><a class="back" href="/">← 返回全部文章</a><h1>{html.escape(title)}</h1>{meta}</div>
 <div class="article-layout"><article class="prose">{article}<div class="article-end"><a href="{html.escape(post['html_url'])}">在 GitHub 阅读 / 留言 ↗</a><a href="#main">回到顶部 ↑</a></div></article>{toc}</div></main>'''
         write(f'posts/{number}/index.html', shell(title + " · JasperYux's Blog", article_content, url, plain(body)[:140]))
-        cards.append(f'<article class="post-card">{meta}<h2><a href="{url}">{html.escape(title)}</a></h2></article>')
+        home_meta = f'<div class="post-meta"><time>{date(post["updated_at"])}</time><span>· {"周报" if is_weekly else "随笔"}</span></div>'
+        cards.append(f'<article class="post-card">{home_meta}<h2><a href="{url}">{html.escape(title)}</a></h2></article>')
         rendered.append((post, article, url))
     archives = ''.join(f'<a class="archive-link" href="/posts/{items[0]["number"]}/">{year}<span>{len(items)} 篇 ↗</span></a>' for year, items in sorted(years.items(), reverse=True))
     content = f'''<div class="home-layout"><aside class="profile" aria-label="个人信息"><a href="https://github.com/{OWNER}"><img class="avatar" src="/assets/avatar.png" width="64" height="64" alt="JasperYux 的头像"></a><a class="profile-name" href="/">JasperYux</a><p class="bio">后端工程师 | 记录生活</p><a class="email" href="mailto:yxzzzzzz8@163.com">yxzzzzzz8@163.com</a><nav class="profile-nav" aria-label="主导航"><a href="/" aria-current="page">全部文章</a><a href="https://github.com/{OWNER}/{REPO}">GitHub ↗</a><a href="/feed.xml">RSS</a></nav><p class="profile-footer">© {datetime.now(ZoneInfo('Asia/Shanghai')).year} JasperYux</p></aside><main id="main"><h1 class="section-heading">最近更新</h1>{''.join(cards)}</main></div>'''
